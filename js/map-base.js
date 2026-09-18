@@ -79,15 +79,25 @@
 
   window.initMap = function () {
     if (!window.BMapGL) {
-      console.error('[赣鄱智轨] BMapGL 未加载——请检查 config.js 的 BMAP_AK 是否已填写、referer 白名单是否含本机地址。');
+      // ★ 降级保护 ★
+      // 百度地图脚本未能加载时（AK 失效 / 白名单未放行当前域名 / 当日配额用尽 / 网络受限），
+      // 不再只给一段冷冰冰的报错，而是直接给出可继续观看的入口：
+      // 零 AK 版 index.html 不依赖百度地图，六大模块内容完全一致。
+      // 这样"无论评委用什么网络、AK 是否可用"，都一定能看到这套内容。
+      console.error('[赣鄱智轨] BMapGL 未加载：请检查 AK 是否有效、referer 白名单是否含当前域名。');
       var box = document.getElementById('map_container');
       if (box) {
         box.innerHTML =
-          '<div style="padding:40px;color:#7ab8e0;font-family:Microsoft YaHei;text-align:center">' +
-          '<h2 style="color:#00d4ff">地图未加载</h2>' +
-          '<p>请在 <code>web/js/config.js</code> 填入你的百度地图 AK：</p>' +
-          '<p style="font-size:13px;color:#5a8ab0">申请入口 https://lbs.baidu.com/apiconsole/key</p>' +
-          '<p style="font-size:13px;color:#5a8ab0">浏览器端 AK 需把 http://localhost:8000 加进 referer 白名单</p>' +
+          '<div style="padding:70px 30px;color:#7ab8e0;font-family:Microsoft YaHei;text-align:center;line-height:1.95">' +
+            '<h2 style="color:#00d4ff;margin-bottom:16px">百度底图暂时不可用</h2>' +
+            '<p style="color:#a0c8e0">页面其余功能与数据均正常。<br>' +
+            '可切换到<b style="color:#ffffff">零 AK 版</b>继续查看，六大模块完全一致。</p>' +
+            '<p style="margin:26px 0">' +
+              '<a href="index.html" style="display:inline-block;padding:13px 34px;background:#00d4ff;color:#001020;' +
+              'border-radius:6px;text-decoration:none;font-weight:bold;font-size:15px">前往零 AK 版 →</a>' +
+            '</p>' +
+            '<p style="font-size:12px;color:#5a8ab0">可能原因：AK 未生效 / referer 白名单未包含当前域名 / 当日配额用尽 / 网络受限</p>' +
+            '<p style="font-size:12px;color:#3a6a90">建议在百度控制台把 referer 白名单设为 <code>*</code>（全部放行），可杜绝域名类问题</p>' +
           '</div>';
       }
       return;

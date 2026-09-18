@@ -11,7 +11,12 @@
 (function () {
   'use strict';
 
-  var MAPVGL_URL = 'https://code.bdstatic.com/npm/mapvgl@1.0.30/dist/mapvgl.min.js';
+  // ★ 已修正 CDN 地址 ★
+  // 原地址 mapvgl@1.0.30 是错误的：mapvgl 的版本号是 "1.0.0-beta.x" 格式，
+  // 根本不存在 1.0.30，因此该地址长期返回 404，导致热力图一直静默退回到
+  // Circle 气泡模式（外观与真热力完全不同）。现改用真实存在的版本 + 双 CDN 兜底。
+  var MAPVGL_URL = 'https://cdn.jsdelivr.net/npm/mapvgl@1.0.0-beta.199/dist/mapvgl.min.js';
+  var MAPVGL_FALLBACK = 'https://unpkg.com/mapvgl@1.0.0-beta.199/dist/mapvgl.min.js';
   var DATA_FILES = {
     weekday: 'data/flow_weekday.json',
     holiday: 'data/flow_holiday.json'
@@ -212,17 +217,30 @@
     dp.then(function () { if (!window.mapvgl) render(); });
   }
 
+  // 依次尝试多个 CDN，任一成功即返回；全部失败才退回 Circle 气泡
   function ensureMapvgl() {
     return new Promise(function (resolve) {
       if (window.mapvgl) return resolve();
-      var s = document.createElement('script');
-      s.src = MAPVGL_URL;
-      s.onload = function () { resolve(); };
-      s.onerror = function () {
-        console.warn('[赣鄱智轨] MapVGL 加载失败，热力退回 Circle 气泡');
-        resolve();
-      };
-      document.head.appendChild(s);
+      var urls = [MAPVGL_URL, MAPVGL_FALLBACK];
+      function tryNext(i) {
+        if (i >= urls.length) {
+          console.warn('[赣鄱智轨] MapVGL 所有 CDN 均加载失败，热力退回 Circle 气泡');
+          return resolve();
+        }
+        var s = document.createElement('script');
+        s.src = urls[i];
+        s.onload = function () {
+          if (window.mapvgl) {
+            console.log('[赣鄱智轨] MapVGL 加载成功：' + urls[i]);
+            resolve();
+          } else {
+            tryNext(i + 1);   // 脚本 200 但内容异常时也继续尝试下一个
+          }
+        };
+        s.onerror = function () { tryNext(i + 1); };
+        document.head.appendChild(s);
+      }
+      tryNext(0);
     });
   }
 
