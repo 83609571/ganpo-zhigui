@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>赣鄱智轨——数字孪生可视化平台（校赛演示版·零AK）</title>
+<title>赣鄱智轨</title>
 <!-- ECharts + ECharts-GL（免费CDN，无需任何API Key） -->
 <!-- ★ 依赖本地化：本地优先，CDN 兜底 ★
      把 ECharts / ECharts-GL 放进 lib/ 后，本页不再依赖外网 CDN ——
@@ -219,7 +219,7 @@ window.onerror = function (msg, src, line) {
 </script>
 
 <div id="topbar">
-  <div class="brand">赣鄱智轨 <small>江西省通勤-旅游复合轨道 · 校赛演示版（零AK·ECharts-GL）｜市赛换百度版 bmap.html</small></div>
+  <div class="brand">赣鄱智轨</div>
   <div id="module-nav">
     <button data-mod="network" class="active">线网一张图</button>
     <button data-mod="heat">客流热力</button>
@@ -569,7 +569,7 @@ function loadGeo(){
 }
 function showErr(){
   var el=document.getElementById('loading');
-  el.innerHTML='地图数据加载失败：请通过本地server打开（python3 -m http.server 8000）<br>或检查网络（需访问 cdn.jsdelivr.net 与 geo.datav.aliyun.com）';
+  el.innerHTML='地图数据加载失败。<br>请确认网络可访问 cdn.jsdelivr.net（ECharts 依赖），<br>或通过本地 server 打开（python3 -m http.server 8000）。';
 }
 
 function init(geoJSON){
@@ -1070,7 +1070,25 @@ var CMP_TECH = {
 // 面板初始化放在这里执行：此时 COMPARE_ROUTES 等数据已全部定义
 initOptimizePanel();
 
-loadGeo();
+// ---------- 等 ECharts 就绪后再加载地图 ----------
+// ★ 修复"地图数据加载失败"误报 ★
+// 页面顶部的 <script src="lib/echarts.min.js"> 若加载失败（如未部署 lib 目录），
+// onerror 会动态插入 CDN 兜底脚本 —— 那是【异步】加载的。
+// 若此处直接 loadGeo()，init() 执行到 echarts.registerMap 时 echarts 尚未定义，
+// 抛出的异常会被 .catch(showErr) 捕获，于是误报成"地图数据加载失败"。
+// 因此这里先轮询等待 ECharts 真正可用，再开始加载地图。
+(function waitEchartsThenLoadGeo(){
+  var tries = 0;
+  (function poll(){
+    if (window.echarts && window.echarts.registerMap) { loadGeo(); return; }
+    if (++tries > 300) {            // 最多等 30 秒
+      console.error('[赣鄱智轨] ECharts 加载超时：请检查 lib/echarts.min.js 是否已部署，或网络能否访问 cdn.jsdelivr.net');
+      showErr();
+      return;
+    }
+    setTimeout(poll, 100);
+  })();
+})();
 console.log('[赣鄱智轨] 校赛演示版就绪：零AK，ECharts-GL 渲染');
 </script>
 </body>
