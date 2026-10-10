@@ -14,6 +14,11 @@
   <script src="js/emergency.js"></script>
   <script src="js/train-sim.js"></script>
   <script src="js/transfer-sim.js"></script>
+  <!-- ★ 制式分段：一键切换“轨道制式”视图（轮轨/单轨/齿轨 + 转换节点 + 景区集散） -->
+  <script src="js/system-lines.js"></script>
+  <!-- ★ 路段流量：区段断面客流拥挤度着色 + 站点/新增站点客流标注
+       （数据：data/flow_{holiday|weekday}.json；新增站点客流为可复核推演） -->
+  <script src="js/flow-layer.js"></script>
   <script src="js/app.js"></script>
   <!-- 3) 注入百度地图 JSAPI GL（AK 取自 config.js 的 window.GanpoConfig.BMAP_AK）
        ★ 必须用 document.write 在"HTML 解析阶段"同步注入 ★
